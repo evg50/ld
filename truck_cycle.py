@@ -1,7 +1,7 @@
 from time import sleep
 import subprocess
 from adb import take_screenshot, tap, tap_refresh
-from vision import find_fragments
+from vision import find_fragments, check_server, check_server_multi
 import sys
 import os
 import time
@@ -68,21 +68,45 @@ def process_truck(screen_w, screen_h):
     count = analyze_truck(screen_w, screen_h)
 
     if count == 2:
-        now = time.strftime("%Y-%m-%d %H:%M:%S")  # текущее время
-        print(f"➡️ [{now}] [{DEVICE_ID}]  чат 1 (2 фрагмента)")
-        share_truck(chat_type=1, screen_w=screen_w, screen_h=screen_h)
+        now = time.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"➡️ [{now}] [{DEVICE_ID}] чат 1 (2 фрагмента)")
+        
+        if check_server_multi(
+            screenshot_path=SCREENSHOT_PATH,
+            server_templates=[
+            "templates/servers/35_1.png",
+            "templates/servers/35_2.png"
+            ],
+            server_range=(230, 640, 248, 655),
+            threshold=1
+        ):
+            # print("➡️ Сервер совпал → отправляем")
+            share_truck(chat_type=1, screen_w=screen_w, screen_h=screen_h)
+       
+           
+    elif count == 1:
+        now = time.strftime("%Y-%m-%d %H:%M:%S")
+        # print(f"➡️ [{now}] [{DEVICE_ID}] найден 1 фрагмент, проверяем сервер...")
 
-    # elif count == 2:
-    #     print("➡️ Отправляем в чат 1 (2 фрагмента)")
-    #     share_truck(chat_type=1, screen_w=screen_w, screen_h=screen_h)
+        if check_server_multi(
+            screenshot_path=SCREENSHOT_PATH,
+            server_templates=[
+            "templates/servers/35_1.png",
+            "templates/servers/35_2.png"
+            ],
+            server_range=(230, 640, 248, 655),
+            threshold=1
+        ):
+            # print(f"✅ [{now}] [{DEVICE_ID}] сервер совпал → отправляем в чат 1 (1 фрагмент)")
+            share_truck(chat_type=1, screen_w=screen_w, screen_h=screen_h)
+        # else:
+            # print(f"🚫 [{now}] [{DEVICE_ID}] сервер не совпал → пропускаем отправку")
 
     elif count == 3:
-        now = time.strftime("%Y-%m-%d %H:%M:%S")  # текущее время
-        print(f"➡️ [{now}] [{DEVICE_ID}]  чат 2 (3 фрагмента)")
+        now = time.strftime("%Y-%m-%d %H:%M:%S")
+        print(f"➡️ [{now}] [{DEVICE_ID}] чат 2 (3 фрагмента)")
         share_truck(chat_type=2, screen_w=screen_w, screen_h=screen_h)
 
-    # else:
-        # print("🚫 Грузовик не подходит")
 
 
 def main():

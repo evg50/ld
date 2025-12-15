@@ -2,8 +2,8 @@
 import os
 import sys
 import time
-from vision import check_area_xyxy, find_match
-from adb import take_screenshot
+from Ldplayer_bot.vision import check_area_xyxy, find_match
+from Ldplayer_bot.adb import take_screenshot
 
 if len(sys.argv) < 2:
     print("❌ Укажи DEVICE_ID при запуске, например: python hunt.py emulator-5556")
@@ -17,7 +17,7 @@ os.makedirs(SCREEN_DIR, exist_ok=True)
 SCREENSHOT_PATH = f"{SCREEN_DIR}/screen.png"
 
 def tap(x, y, delay=2):
-    os.system(f"adb -s {DEVICE_ID} shell input tap {x} {y}")
+    os.system(f"adb -s {DEVICE_ID} shell input tap {x} {y}"
     time.sleep(delay)
 
 def tap_area(area, delay=1.8):
