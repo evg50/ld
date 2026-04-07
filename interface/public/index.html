@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LDPlayer Bot UI</title>
+</head>
+<body>
+    <h1>Управление LDPlayer ботом</h1>
+
+    <button onclick="hunt()">🔥 Охота</button>
+    <button onclick="startGame()">🎮 Запустить игру</button>
+    <button onclick="updateStatus()">📊 Статус</button>
+    <button onclick="loadScreenshot()">📸 Скриншот</button>
+
+    <h2>Статус:</h2>
+    <pre id="statusBox">Загрузка...</pre>
+
+    <h2>Скриншот:</h2>
+    <img id="screen" src="" width="360">
+<div id="devices"></div>
+
+<script>
+let currentDevice = null;
+
+function loadDevices() {
+    fetch("/devices")
+        .then(r => r.json())
+        .then(devices => {
+            const div = document.getElementById("devices");
+            div.innerHTML = "<b>Устройства:</b><br>";
+
+            devices.forEach(d => {
+                const btn = document.createElement("button");
+                btn.innerText = d.replace("emulator-", "");
+                btn.onclick = () => {
+                    currentDevice = d;
+                    alert("Выбрано устройство: " + d);
+                };
+                div.appendChild(btn);
+            });
+        });
+}
+
+loadDevices();
+</script>
+
+<script>
+function hunt() {
+    fetch('/hunt').then(r => r.text()).then(alert);
+}
+
+function startGame() {
+    fetch('/start-game').then(r => r.text()).then(alert);
+}
+
+function updateStatus() {
+    fetch('/status')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("statusBox").textContent = data.output;
+        });
+}
+
+function loadScreenshot() {
+    document.getElementById("screen").src = "/screenshot?ts=" + Date.now();
+}
+
+// автообновление статуса
+setInterval(updateStatus, 3000);
+updateStatus();
+</script>
+
+</body>
+</html>
