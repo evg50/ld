@@ -4,8 +4,7 @@ import re
 import os
 import cv2
 import numpy as np
-from adb import take_screenshot
-from adb import BASE_DIR
+from Ldplayer_bot.adb import take_screenshot, BASE_DIR
 import os
 
 
@@ -58,11 +57,11 @@ def wait_for_any_template(device, folder, timeout=180, threshold=0.8):
     Ждём появления ЛЮБОГО шаблона из папки.
     Например: templates/start_screen/
     """
-    print(f"⏳ Ждём появления шаблонов в папке: {folder}")
+    print(f" Ждём появления шаблонов в папке: {folder}")
 
     templates = load_templates_from_folder(folder)
     if not templates:
-        print(f"❌ В папке {folder} нет PNG шаблонов")
+        print(f" В папке {folder} нет PNG шаблонов")
         return None
 
     start = time.time()
@@ -72,18 +71,18 @@ def wait_for_any_template(device, folder, timeout=180, threshold=0.8):
 
         for tpl in templates:
             if match_template(screenshot_path, tpl, threshold):
-                print(f"🎯 Найден шаблон: {tpl}")
-                print(f"⏱ Полная загрузка игры: {int(time.time() - start)} сек")
+                print(f" Найден шаблон: {tpl}")
+                print(f" Полная загрузка игры: {int(time.time() - start)} сек")
                 return tpl
 
         time.sleep(1)
 
-    print("⚠️ Ни один шаблон не найден")
+    print(" Ни один шаблон не найден")
     return None
 
 
 def launch_emulator(index):
-    print(f"▶️ Запускаем LDPlayer index={index}")
+    print(f" Запускаем LDPlayer index={index}")
     run_cmd([LDPLAYER_PATH, "launch", "--index", str(index)])
 
 
@@ -97,7 +96,7 @@ def wait_for_emulator_adb(timeout=120):
     Это единственный надёжный способ для LDPlayer 9.
     """
 
-    print("⏳ Ждём появления ADB устройства...")
+    print(" Ждём появления ADB устройства...")
     start = time.time()
 
     before = set(get_adb_devices())
@@ -108,13 +107,13 @@ def wait_for_emulator_adb(timeout=120):
 
         if new:
             device_id = list(new)[0]
-            print(f"✅ Эмулятор готов, ADB устройство: {device_id}")
-            print(f"⏱ Время загрузки: {int(time.time() - start)} сек")
+            print(f" Эмулятор готов, ADB устройство: {device_id}")
+            print(f" Время загрузки: {int(time.time() - start)} сек")
             return device_id
 
         time.sleep(1)
 
-    raise TimeoutError("❌ ADB устройство не появилось")
+    raise TimeoutError(" ADB устройство не появилось")
 
 
 # -----------------------------
@@ -131,22 +130,22 @@ def is_game_running(device):
 
 
 def start_game(device):
-    print("▶️ Запуск игры...")
+    print(" Запуск игры...")
     run_adb(device, f"shell monkey -p {PACKAGE} 1")
 
 
 def force_stop(device):
-    print("🛑 Принудительное закрытие игры")
+    print(" Принудительное закрытие игры")
     run_adb(device, f"shell am force-stop {PACKAGE}")
 
 
 def wait_for_game(device, timeout=40):
-    print("⏳ Ждём загрузки игры...")
+    print(" Ждём загрузки игры...")
     start = time.time()
 
     for _ in range(timeout):
         if is_game_running(device):
-            print(f"🎮 Игра запущена за {int(time.time() - start)} сек")
+            print(f" Игра запущена за {int(time.time() - start)} сек")
             return True
         time.sleep(1)
 
@@ -190,3 +189,20 @@ def start_emulator_and_game(index=0):
 
     return device_id
 
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) < 2:
+        print("Ошибка: не передан index")
+        sys.exit(1)
+
+    try:
+        index = int(sys.argv[1])
+    except ValueError:
+        print("Ошибка: index должен быть числом")
+        sys.exit(1)
+
+    print(f" Получен index = {index}")
+    device = start_emulator_and_game(index)
+
+    print(f" Готово! Эмулятор запущен, устройство: {device}")

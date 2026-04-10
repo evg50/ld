@@ -13,7 +13,8 @@ def main():
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
     # папка для устройства
-    folder = os.path.join("screenshots", DEVICE_ID)
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    folder = os.path.join(BASE_DIR, "screenshots", DEVICE_ID)
     os.makedirs(folder, exist_ok=True)
 
     # путь сохранения
