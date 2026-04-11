@@ -40,8 +40,9 @@ from time import sleep
 # Абсолютный путь к корню проекта Ldplayer_bot
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-def tap(x, y, device_id):
+def tap(device_id, x, y):
     subprocess.run(["adb", "-s", device_id, "shell", "input", "tap", str(x), str(y)])
+
 
 def take_screenshot(device_id: str):
     folder = os.path.join(BASE_DIR, "screenshots", device_id)

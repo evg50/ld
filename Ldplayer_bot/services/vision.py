@@ -47,36 +47,72 @@ def find_fragments(template_path, screenshot_path="screenshots/screen.png",
     else:
         return 0
 
-def find_match(screenshot_path, template_path, area):
+# def find_match(screenshot_path, template_path, area):
+#     """
+#     Ищем шаблон в указанной области скриншота.
+#     Возвращает координаты прямоугольника совпадения (x1, y1, x2, y2) или None.
+#     """
+#     # Загружаем изображения
+#     screenshot = cv2.imread(screenshot_path)
+#     template = cv2.imread(template_path)
+
+#     # Вырезаем область из скриншота
+#     x1, y1, x2, y2 = area
+#     roi = screenshot[y1:y2, x1:x2]
+
+#     # Сравниваем шаблон с областью
+#     result = cv2.matchTemplate(roi, template, cv2.TM_CCOEFF_NORMED)
+#     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+#     # Порог совпадения
+#     threshold = 0.8
+#     if max_val >= threshold:
+#         # координаты совпадения внутри ROI
+#         top_left = max_loc
+#         h, w = template.shape[:2]
+#         match_x1 = x1 + top_left[0]
+#         match_y1 = y1 + top_left[1]
+#         match_x2 = match_x1 + w
+#         match_y2 = match_y1 + h
+#         return (match_x1, match_y1, match_x2, match_y2)
+
+#     return None
+def find_match(screenshot_path, template_path, area=None, threshold=0.8):
     """
-    Ищем шаблон в указанной области скриншота.
-    Возвращает координаты прямоугольника совпадения (x1, y1, x2, y2) или None.
+    Ищем шаблон в скриншоте или в указанной области.
+    Возвращает (cx, cy, max_val) или None.
     """
-    # Загружаем изображения
+
     screenshot = cv2.imread(screenshot_path)
     template = cv2.imread(template_path)
 
-    # Вырезаем область из скриншота
-    x1, y1, x2, y2 = area
-    roi = screenshot[y1:y2, x1:x2]
+    if screenshot is None or template is None:
+        return None
 
-    # Сравниваем шаблон с областью
+    # Если область указана — вырезаем ROI
+    if area:
+        x1, y1, x2, y2 = area
+        roi = screenshot[y1:y2, x1:x2]
+        offset_x, offset_y = x1, y1
+    else:
+        roi = screenshot
+        offset_x, offset_y = 0, 0
+
     result = cv2.matchTemplate(roi, template, cv2.TM_CCOEFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
-    # Порог совпадения
-    threshold = 0.8
-    if max_val >= threshold:
-        # координаты совпадения внутри ROI
-        top_left = max_loc
-        h, w = template.shape[:2]
-        match_x1 = x1 + top_left[0]
-        match_y1 = y1 + top_left[1]
-        match_x2 = match_x1 + w
-        match_y2 = match_y1 + h
-        return (match_x1, match_y1, match_x2, match_y2)
+    if max_val < threshold:
+        return None
 
-    return None
+    # координаты совпадения
+    top_left = max_loc
+    h, w = template.shape[:2]
+
+    # центр кнопки
+    cx = offset_x + top_left[0] + w // 2
+    cy = offset_y + top_left[1] + h // 2
+
+    return (cx, cy, max_val)
 
 def check_server(
     screenshot_path="screenshots/screen.png",

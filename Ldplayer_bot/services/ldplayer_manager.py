@@ -6,16 +6,40 @@ import cv2
 import numpy as np
 from Ldplayer_bot.adb import take_screenshot, BASE_DIR
 import os
+from Ldplayer_bot.services.screen_analyzer import reach_game_start
 
 
-LDPLAYER_PATH = r"H:\LDPlayer\LDPlayer9\ldconsole.exe"
+LDPLAYER_PATH = r"H:\LDPlayer\ldconsole.exe"
 PACKAGE = "com.readygo.barrel.gp"
+DEVICE_MAP = {
+    0: "emulator-5554",
+    1: "emulator-5556",
+    2: "emulator-5558",
+    3: "emulator-5560",
+    4: "emulator-5562",
+    5: "emulator-5564",
+    6: "emulator-5566",
+    7: "emulator-5568",
+    8: "emulator-5570",
+}
 
+def get_device_id_by_index(index):
+    return DEVICE_MAP[index]
 print(">>> BASE_DIR =", BASE_DIR)
 # -----------------------------
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # -----------------------------
+def wait_for_device_online(device_id, timeout=60):
+    print(f"Ждём появления {device_id} в ADB...")
 
+    for _ in range(timeout):
+        out = subprocess.getoutput("adb devices")
+        if device_id in out and "offline" not in out:
+            print(f"{device_id} готов к работе")
+            return True
+        time.sleep(1)
+
+    raise TimeoutError(f"{device_id} не появился в ADB")
 def run_cmd(cmd):
     return subprocess.getoutput(" ".join(cmd))
 
@@ -51,6 +75,44 @@ def get_adb_devices():
         if "\tdevice" in line:
             devices.append(line.split("\t")[0])
     return devices
+
+# ---------------------------------------------------------
+# Запуск LDPlayer по индексу
+# ---------------------------------------------------------
+def launch_emulator(index):
+    print(f"Запускаем LDPlayer index={index}")
+    subprocess.Popen([r"C:\LDPlayer\LDPlayer.exe", f"--index={index}"])
+    time.sleep(3)
+# ---------------------------------------------------------
+# Проверка, запущена ли игра
+# ---------------------------------------------------------
+def is_game_running(device_id, package="com.lastz.survive.shooter"):
+    out = subprocess.getoutput(f"adb -s {device_id} shell pidof {package}")
+    return out.strip().isdigit()
+
+
+# ---------------------------------------------------------
+# Запуск игры
+# ---------------------------------------------------------
+def start_game(device_id, package="com.lastz.survive.shooter"):
+    print(f"Запускаем игру на {device_id}")
+    subprocess.run(["adb", "-s", device_id, "shell", "monkey", "-p", package, "-c", "android.intent.category.LAUNCHER", "1"])
+    time.sleep(2)
+
+# ---------------------------------------------------------
+# Ожидание, пока устройство появится в ADB
+# ---------------------------------------------------------
+def wait_for_device_online(device_id, timeout=60):
+    print(f"Ждём появления {device_id} в ADB...")
+
+    for _ in range(timeout):
+        out = subprocess.getoutput("adb devices")
+        if device_id in out and "offline" not in out:
+            print(f"{device_id} готов к работе")
+            return True
+        time.sleep(1)
+
+    raise TimeoutError(f"{device_id} не появился в ADB")
 
 def wait_for_any_template(device, folder, timeout=180, threshold=0.8):
     """
@@ -90,31 +152,44 @@ def launch_emulator(index):
 # УМНОЕ ОЖИДАНИЕ LDPLAYER 9
 # -----------------------------
 
-def wait_for_emulator_adb(timeout=120):
-    """
-    Ждём появления нового ADB устройства.
-    Это единственный надёжный способ для LDPlayer 9.
-    """
+# def wait_for_emulator_adb(timeout=120):
+#     """
+#     Ждём появления нового ADB устройства.
+#     Это единственный надёжный способ для LDPlayer 9.
+#     """
 
-    print(" Ждём появления ADB устройства...")
-    start = time.time()
+#     print(" Ждём появления ADB устройства...")
+#     start = time.time()
 
-    before = set(get_adb_devices())
+#     before = set(get_adb_devices())
 
-    for _ in range(timeout):
-        after = set(get_adb_devices())
-        new = after - before
+#     for _ in range(timeout):
+#         after = set(get_adb_devices())
+#         new = after - before
 
-        if new:
-            device_id = list(new)[0]
-            print(f" Эмулятор готов, ADB устройство: {device_id}")
-            print(f" Время загрузки: {int(time.time() - start)} сек")
-            return device_id
+#         if new:
+#             device_id = list(new)[0]
+#             print(f" Эмулятор готов, ADB устройство: {device_id}")
+#             print(f" Время загрузки: {int(time.time() - start)} сек")
+#             return device_id
 
-        time.sleep(1)
+#         time.sleep(1)
 
-    raise TimeoutError(" ADB устройство не появилось")
+#     raise TimeoutError(" ADB устройство не появилось")
+# def wait_for_emulator_adb(timeout=120):
+#     print("Ищем рабочее ADB устройство...")
 
+#     for _ in range(timeout):
+#         devices = get_adb_devices()
+
+#         for d in devices:
+#             if "offline" not in d:
+#                 print("Найдено устройство:", d)
+#                 return d
+
+#         time.sleep(1)
+
+#     raise TimeoutError("Нет доступных ADB устройств")
 
 # -----------------------------
 # УПРАВЛЕНИЕ ИГРОЙ
@@ -139,70 +214,59 @@ def force_stop(device):
     run_adb(device, f"shell am force-stop {PACKAGE}")
 
 
-def wait_for_game(device, timeout=40):
-    print(" Ждём загрузки игры...")
-    start = time.time()
-
+def wait_for_device_online(device_id, timeout=60):
     for _ in range(timeout):
-        if is_game_running(device):
-            print(f" Игра запущена за {int(time.time() - start)} сек")
+        out = subprocess.getoutput("adb devices")
+        if device_id in out and "offline" not in out:
             return True
         time.sleep(1)
-
-    return False
+    raise TimeoutError(f"{device_id} не появился в ADB")
 
 
 # -----------------------------
 # ГЛАВНАЯ ФУНКЦИЯ
 # -----------------------------
 
-def start_emulator_and_game(index=0):
-    """
-    Универсальный запуск LDPlayer 9:
-    1. Запуск эмулятора
-    2. Ожидание появления ADB устройства
-    3. Запуск игры
-    4. Ожидание полной загрузки по шаблонам
-    """
+# def start_emulator_and_game(index=0):
+#     device_id = get_device_id_by_index(index)
 
-    # 1. Запуск эмулятора
+#     print(f"Используем device_id: {device_id}")
+
+#     launch_emulator(index)
+
+#     # Ждём, пока устройство станет online
+#     wait_for_device_online(device_id)
+
+#     # Запускаем игру, если она не запущена
+#     if not is_game_running(device_id):
+#         start_game(device_id)
+#         time.sleep(2)
+
+#     # Проходим экраны загрузки
+#     reach_game_start(device_id)
+
+#     return device_id
+def start_emulator_and_game(index=0):
+    device_id = get_device_id_by_index(index)
+    print(f"Используем device_id: {device_id}")
+
     launch_emulator(index)
 
-    # 2. Ждём появления нового ADB устройства
-    device_id = wait_for_emulator_adb()
+    wait_for_device_online(device_id)
 
-    # 3. Запуск игры (если не запущена)
     if not is_game_running(device_id):
         start_game(device_id)
-        time.sleep(2)
 
-    # 4. Ждём появления процесса игры
-    wait_for_game(device_id)
-
-    # 5. Ждём появления ЛЮБОГО шаблона из папки templates/start_screen
-    wait_for_any_template(
-        device=device_id,
-        folder=os.path.join(BASE_DIR, "templates", "start_screen")
-        # timeout=180,
-        # threshold=0.8
-    )
+    reach_game_start(device_id)
 
     return device_id
 
 if __name__ == "__main__":
     import sys
-
     if len(sys.argv) < 2:
-        print("Ошибка: не передан index")
+        print("Ошибка: не указан index")
         sys.exit(1)
 
-    try:
-        index = int(sys.argv[1])
-    except ValueError:
-        print("Ошибка: index должен быть числом")
-        sys.exit(1)
-
-    print(f" Получен index = {index}")
-    device = start_emulator_and_game(index)
-
-    print(f" Готово! Эмулятор запущен, устройство: {device}")
+    index = int(sys.argv[1])
+    device_id = start_emulator_and_game(index)
+    print(f"OK: {device_id}")

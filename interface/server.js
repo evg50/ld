@@ -207,7 +207,7 @@ app.get("/start-ld", (req, res) => {
 
     // Запуск Python
     exec(
-        `"C:\\Users\\Пользователь\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m Ldplayer_bot.services.ldplayer_manager ${index}`,
+        `"C:\\Users\\Пользователь\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m Ldplayer_bot.services.ldplayer_manager ${parseInt(index)}`,
         { cwd: "C:\\Ldplayer_bot" },
         (err, stdout, stderr) => {
             if (err) {
