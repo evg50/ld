@@ -1,153 +1,133 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>LDPlayer Bot UI</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Управление LDPlayer ботом</h1>
 
-    <button onclick="hunt()">🔥 Охота</button>
-    
-    <button onclick="updateStatus()">📊 Статус</button>
-    <button onclick="loadScreenshot()">📸 Скриншот</button>
-    
-    <button onclick="stopBot()">Остановить бота</button>
-    <div id="botStatus">—</div>
-    <button onclick="startGame()">Запустить игру</button>
-    <div id="gameOutput">—</div>
-    <div id="ldButtons">
-    <b>Запуск LDPlayer по индексу:</b><br>
-    <button onclick="startIndex(0)">Индекс 0</button>
-    <button onclick="startIndex(1)">Индекс 1</button>
-    <button onclick="startIndex(2)">Индекс 2</button>
-    <button onclick="startIndex(3)">Индекс 3</button>
-    <button onclick="startIndex(4)">Индекс 4</button>
-    <button onclick="startIndex(5)">Индекс 5</button>
-</div>
+<h2>Устройства</h2>
 
-<div id="ldOutput">—</div>
+<table class="devices-table">
+    <thead>
+        <tr>
+            <th>Индекс</th>
+            <th>Имя</th>
+            <th>Функция</th>
+            <th>Старт</th>
+            <th>Стоп</th>
+            <th>Скриншот</th>
+            <th>Превью</th>
+            <th>Статус</th>
+        </tr>
+    </thead>
 
+    <tbody>
+        <tr data-device="emulator-5554">
+            <td>0</td>
+            <td>Glory F2p 26</td>
+            <td>
+                <select>
+                    <option>Охота</option>
+                    <option>Фарм</option>
+                    <option>VIP</option>
+                </select>
+            </td>
+            <td><button class="start-btn">Старт</button></td>
+            <td><button class="stop-btn">Стоп</button></td>
+            <td><button class="shot-btn">📸</button></td>
+            <td><img id="img-emulator-5554" width="120"></td>
+            <td id="status-emulator-5554">—</td>
+        </tr>
 
-    <h2>Статус:</h2>
-    <pre id="statusBox">Загрузка...</pre>
+        <tr data-device="emulator-5556">
+            <td>1</td>
+            <td>Farm Glory 25</td>
+            <td>
+                <select>
+                    <option>Охота</option>
+                    <option>Фарм</option>
+                    <option>VIP</option>
+                </select>
+            </td>
+            <td><button class="start-btn">Старт</button></td>
+            <td><button class="stop-btn">Стоп</button></td>
+            <td><button class="shot-btn">📸</button></td>
+            <td><img id="img-emulator-5556" width="120"></td>
+            <td id="status-emulator-5556">—</td>
+        </tr>
 
-    <h2>Скриншот:</h2>
-    <img id="screen" src="" width="360">
-<div id="devices"></div>
+        <tr data-device="emulator-5558">
+            <td>2</td>
+            <td>Ukrop</td>
+            <td>
+                <select>
+                    <option>Охота</option>
+                    <option>Фарм</option>
+                    <option>VIP</option>
+                </select>
+            </td>
+            <td><button class="start-btn">Старт</button></td>
+            <td><button class="stop-btn">Стоп</button></td>
+            <td><button class="shot-btn">📸</button></td>
+            <td><img id="img-emulator-5558" width="120"></td>
+            <td id="status-emulator-5558">—</td>
+        </tr>
 
-<script>
-    function startIndex(i) {
-    document.getElementById("ldOutput").innerText = "Запуск индекса " + i + "...";
+        <tr data-device="emulator-5560">
+            <td>3</td>
+            <td>Glory-farm</td>
+            <td>
+                <select>
+                    <option>Охота</option>
+                    <option>Фарм</option>
+                    <option>VIP</option>
+                </select>
+            </td>
+            <td><button class="start-btn">Старт</button></td>
+            <td><button class="stop-btn">Стоп</button></td>
+            <td><button class="shot-btn">📸</button></td>
+            <td><img id="img-emulator-5560" width="120"></td>
+            <td id="status-emulator-5560">—</td>
+        </tr>
 
-    fetch("/start-ld?index=" + i)
-        .then(r => r.text())
-        .then(text => {
-            document.getElementById("ldOutput").innerText = text;
-        })
-        .catch(() => {
-            document.getElementById("ldOutput").innerText = "Ошибка запроса";
-        });
-}
+        <tr data-device="emulator-5562">
+            <td>4</td>
+            <td>Bandera</td>
+            <td>
+                <select>
+                    <option>Охота</option>
+                    <option>Фарм</option>
+                    <option>VIP</option>
+                </select>
+            </td>
+            <td><button class="start-btn">Старт</button></td>
+            <td><button class="stop-btn">Стоп</button></td>
+            <td><button class="shot-btn">📸</button></td>
+            <td><img id="img-emulator-5562" width="120"></td>
+            <td id="status-emulator-5562">—</td>
+        </tr>
 
-let currentDevice = null;
-function startBot() {
-    if (!currentDevice) return alert("Сначала выбери устройство!");
+        <tr data-device="emulator-5564">
+            <td>5</td>
+            <td>Glory--Farm</td>
+            <td>
+                <select>
+                    <option>Охота</option>
+                    <option>Фарм</option>
+                    <option>VIP</option>
+                </select>
+            </td>
+            <td><button class="start-btn">Старт</button></td>
+            <td><button class="stop-btn">Стоп</button></td>
+            <td><button class="shot-btn">📸</button></td>
+            <td><img id="img-emulator-5564" width="120"></td>
+            <td id="status-emulator-5564">—</td>
+        </tr>
+    </tbody>
+</table>
 
-    fetch("/bot/start?device=" + currentDevice)
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById("botStatus").innerText = data.status;
-        });
-}
-
-function stopBot() {
-    fetch("/bot/stop")
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById("botStatus").innerText = data.status;
-        });
-}
-
-function updateBotStatus() {
-    fetch("/bot/status")
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById("botStatus").innerText = data.status;
-        });
-}
-
-function loadDevices() {
-    fetch("/devices")
-        .then(r => r.json())
-        .then(devices => {
-            const div = document.getElementById("devices");
-            div.innerHTML = "<b>Устройства:</b><br>";
-
-            devices.forEach(d => {
-                const btn = document.createElement("button");
-                btn.innerText = d.replace("emulator-", "");
-                btn.onclick = () => {
-                    currentDevice = d;
-                    alert("Выбрано устройство: " + d);
-                };
-                div.appendChild(btn);
-            });
-        });
-}
-
-loadDevices();
-
-function loadStatus() {
-    if (!currentDevice) return alert("Сначала выбери устройство!");
-
-    fetch("/status?device=" + currentDevice)
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById("status").innerText = data.status;
-        });
-}
-
-</script>
-
-<script>
-function hunt() {
-    fetch('/hunt').then(r => r.text()).then(alert);
-}
-
-function startGame() {
-    fetch('/start-game').then(r => r.text()).then(alert);
-}
-
-function updateStatus() {
-    if (!currentDevice) {
-        document.getElementById("statusBox").textContent = "Устройство не выбрано";
-        return;
-    }
-
-    document.getElementById("statusBox").textContent = "Загрузка...";
-
-    fetch("/status?device=" + currentDevice)
-        .then(r => r.json())
-        .then(data => {
-            document.getElementById("statusBox").textContent = data.status;
-        })
-        .catch(() => {
-            document.getElementById("statusBox").textContent = "Ошибка";
-        });
-}
-function loadScreenshot() {
-    if (!currentDevice) return alert("Сначала выбери устройство!");
-
-    document.getElementById("screen").src =
-        "/screenshot?device=" + currentDevice + "&ts=" + Date.now();
-}
-
-
-// автообновление статуса
-setInterval(updateStatus, 3000);
-updateStatus();
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>

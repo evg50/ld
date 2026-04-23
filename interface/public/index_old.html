@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>LDPlayer Bot UI</title>
+</head>
+<body>
+    <h1>Управление LDPlayer ботом</h1>
+
+    <button onclick="hunt()">🔥 Охота</button>
+    
+    <button onclick="updateStatus()">📊 Статус</button>
+    <button onclick="loadScreenshot()">📸 Скриншот</button>
+    
+    <button onclick="stopBot()">Остановить бота</button>
+    <div id="botStatus">—</div>
+    <button onclick="startGame()">Запустить игру</button>
+    <div id="gameOutput">—</div>
+    <div id="ldButtons">
+    <b>Запуск LDPlayer по индексу:</b><br>
+    <button onclick="startIndex(0)">Индекс 0</button>
+    <button onclick="startIndex(1)">Индекс 1</button>
+    <button onclick="startIndex(2)">Индекс 2</button>
+    <button onclick="startIndex(3)">Индекс 3</button>
+    <button onclick="startIndex(4)">Индекс 4</button>
+    <button onclick="startIndex(5)">Индекс 5</button>
+</div>
+
+<div id="ldOutput">—</div>
+
+
+    <h2>Статус:</h2>
+    <pre id="statusBox">Загрузка...</pre>
+
+    <h2>Скриншот:</h2>
+    <img id="screen" src="" width="360">
+<div id="devices"></div>
+
+<script>
+    function startIndex(i) {
+    document.getElementById("ldOutput").innerText = "Запуск индекса " + i + "...";
+
+    fetch("/start-ld?index=" + i)
+        .then(r => r.text())
+        .then(text => {
+            document.getElementById("ldOutput").innerText = text;
+        })
+        .catch(() => {
+            document.getElementById("ldOutput").innerText = "Ошибка запроса";
+        });
+}
+
+let currentDevice = null;
+function startBot() {
+    if (!currentDevice) return alert("Сначала выбери устройство!");
+
+    fetch("/bot/start?device=" + currentDevice)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("botStatus").innerText = data.status;
+        });
+}
+
+function stopBot() {
+    fetch("/bot/stop")
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("botStatus").innerText = data.status;
+        });
+}
+
+function updateBotStatus() {
+    fetch("/bot/status")
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("botStatus").innerText = data.status;
+        });
+}
+
+function loadDevices() {
+    fetch("/devices")
+        .then(r => r.json())
+        .then(devices => {
+            const div = document.getElementById("devices");
+            div.innerHTML = "<b>Устройства:</b><br>";
+
+            devices.forEach(d => {
+                const btn = document.createElement("button");
+                btn.innerText = d.replace("emulator-", "");
+                btn.onclick = () => {
+                    currentDevice = d;
+                    alert("Выбрано устройство: " + d);
+                };
+                div.appendChild(btn);
+            });
+        });
+}
+
+loadDevices();
+
+function loadStatus() {
+    if (!currentDevice) return alert("Сначала выбери устройство!");
+
+    fetch("/status?device=" + currentDevice)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("status").innerText = data.status;
+        });
+}
+
+</script>
+
+<script>
+function hunt() {
+    fetch('/hunt').then(r => r.text()).then(alert);
+}
+
+function startGame() {
+    fetch('/start-game').then(r => r.text()).then(alert);
+}
+
+function updateStatus() {
+    if (!currentDevice) {
+        document.getElementById("statusBox").textContent = "Устройство не выбрано";
+        return;
+    }
+
+    document.getElementById("statusBox").textContent = "Загрузка...";
+
+    fetch("/status?device=" + currentDevice)
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById("statusBox").textContent = data.status;
+        })
+        .catch(() => {
+            document.getElementById("statusBox").textContent = "Ошибка";
+        });
+}
+function loadScreenshot() {
+    if (!currentDevice) return alert("Сначала выбери устройство!");
+
+    document.getElementById("screen").src =
+        "/screenshot?device=" + currentDevice + "&ts=" + Date.now();
+}
+
+
+// автообновление статуса
+setInterval(updateStatus, 3000);
+updateStatus();
+</script>
+
+</body>
+</html>

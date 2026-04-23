@@ -9,7 +9,7 @@ import os
 from Ldplayer_bot.services.screen_analyzer import reach_game_start
 
 
-LDPLAYER_PATH = r"H:\LDPlayer\ldconsole.exe"
+LDPLAYER_PATH = r"H:\LDPlayer\LDPlayer9\ldconsole.exe"
 PACKAGE = "com.readygo.barrel.gp"
 DEVICE_MAP = {
     0: "emulator-5554",
@@ -29,7 +29,7 @@ print(">>> BASE_DIR =", BASE_DIR)
 # -----------------------------
 # ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
 # -----------------------------
-def wait_for_device_online(device_id, timeout=60):
+def wait_for_device_online(device_id, timeout=500):
     print(f"Ждём появления {device_id} в ADB...")
 
     for _ in range(timeout):
@@ -148,52 +148,7 @@ def launch_emulator(index):
     run_cmd([LDPLAYER_PATH, "launch", "--index", str(index)])
 
 
-# -----------------------------
-# УМНОЕ ОЖИДАНИЕ LDPLAYER 9
-# -----------------------------
 
-# def wait_for_emulator_adb(timeout=120):
-#     """
-#     Ждём появления нового ADB устройства.
-#     Это единственный надёжный способ для LDPlayer 9.
-#     """
-
-#     print(" Ждём появления ADB устройства...")
-#     start = time.time()
-
-#     before = set(get_adb_devices())
-
-#     for _ in range(timeout):
-#         after = set(get_adb_devices())
-#         new = after - before
-
-#         if new:
-#             device_id = list(new)[0]
-#             print(f" Эмулятор готов, ADB устройство: {device_id}")
-#             print(f" Время загрузки: {int(time.time() - start)} сек")
-#             return device_id
-
-#         time.sleep(1)
-
-#     raise TimeoutError(" ADB устройство не появилось")
-# def wait_for_emulator_adb(timeout=120):
-#     print("Ищем рабочее ADB устройство...")
-
-#     for _ in range(timeout):
-#         devices = get_adb_devices()
-
-#         for d in devices:
-#             if "offline" not in d:
-#                 print("Найдено устройство:", d)
-#                 return d
-
-#         time.sleep(1)
-
-#     raise TimeoutError("Нет доступных ADB устройств")
-
-# -----------------------------
-# УПРАВЛЕНИЕ ИГРОЙ
-# -----------------------------
 
 def run_adb(device, cmd):
     return subprocess.getoutput(f"adb -s {device} {cmd}")
@@ -214,7 +169,7 @@ def force_stop(device):
     run_adb(device, f"shell am force-stop {PACKAGE}")
 
 
-def wait_for_device_online(device_id, timeout=60):
+def wait_for_device_online(device_id, timeout=260):
     for _ in range(timeout):
         out = subprocess.getoutput("adb devices")
         if device_id in out and "offline" not in out:
@@ -223,30 +178,8 @@ def wait_for_device_online(device_id, timeout=60):
     raise TimeoutError(f"{device_id} не появился в ADB")
 
 
-# -----------------------------
-# ГЛАВНАЯ ФУНКЦИЯ
-# -----------------------------
 
-# def start_emulator_and_game(index=0):
-#     device_id = get_device_id_by_index(index)
-
-#     print(f"Используем device_id: {device_id}")
-
-#     launch_emulator(index)
-
-#     # Ждём, пока устройство станет online
-#     wait_for_device_online(device_id)
-
-#     # Запускаем игру, если она не запущена
-#     if not is_game_running(device_id):
-#         start_game(device_id)
-#         time.sleep(2)
-
-#     # Проходим экраны загрузки
-#     reach_game_start(device_id)
-
-#     return device_id
-def start_emulator_and_game(index=0):
+def start_emulator_and_game(index=5):
     device_id = get_device_id_by_index(index)
     print(f"Используем device_id: {device_id}")
 

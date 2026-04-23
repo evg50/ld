@@ -13,7 +13,7 @@ def find_fragments(template_path, screenshot_path="screenshots/screen.png",
     if img is None or tmpl is None:
         print("❌ Ошибка загрузки скриншота/шаблона")
         return 0
-
+    
     res = cv2.matchTemplate(img, tmpl, cv2.TM_CCOEFF_NORMED)
     loc = np.where(res >= threshold)
     matches = [(x, y) for (x, y) in zip(*loc[::-1])]
@@ -48,35 +48,49 @@ def find_fragments(template_path, screenshot_path="screenshots/screen.png",
         return 0
 
 def find_match(screenshot_path, template_path, area):
-    """
-    Ищем шаблон в указанной области скриншота.
-    Возвращает координаты прямоугольника совпадения (x1, y1, x2, y2) или None.
-    """
-    # Загружаем изображения
     screenshot = cv2.imread(screenshot_path)
     template = cv2.imread(template_path)
 
-    # Вырезаем область из скриншота
+    if screenshot is None:
+        print("ERROR: screenshot not loaded:", screenshot_path)
+        return None
+
+    if template is None:
+        print("ERROR: template not loaded:", template_path)
+        return None
+
     x1, y1, x2, y2 = area
+
+    # Проверка границ
+    h, w = screenshot.shape[:2]
+    if x1 < 0 or y1 < 0 or x2 > w or y2 > h:
+        print("ERROR: ROI out of bounds:", area, "screenshot size:", (w, h))
+        return None
+
     roi = screenshot[y1:y2, x1:x2]
 
-    # Сравниваем шаблон с областью
+    # Проверка пустого ROI
+    if roi.size == 0:
+        print("ERROR: ROI is empty:", area)
+        return None
+
+    # Проверка совпадения каналов
+    if roi.ndim != template.ndim:
+        print("ERROR: channel mismatch: roi", roi.shape, "template", template.shape)
+        return None
+
     result = cv2.matchTemplate(roi, template, cv2.TM_CCOEFF_NORMED)
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
-    # Порог совпадения
     threshold = 0.8
     if max_val >= threshold:
-        # координаты совпадения внутри ROI
         top_left = max_loc
         h, w = template.shape[:2]
-        match_x1 = x1 + top_left[0]
-        match_y1 = y1 + top_left[1]
-        match_x2 = match_x1 + w
-        match_y2 = match_y1 + h
-        return (match_x1, match_y1, match_x2, match_y2)
+        return (x1 + top_left[0], y1 + top_left[1],
+                x1 + top_left[0] + w, y1 + top_left[1] + h)
 
     return None
+
 
 def check_server(
     screenshot_path="screenshots/screen.png",

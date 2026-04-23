@@ -57,12 +57,15 @@ def tap_march():
         take_screenshot(DEVICE_ID)
 
         # claim
-        if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "claim_btn.png"), (345, 300, 460, 500)):
+        if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "claim_btn.png"), (340, 420, 470, 500)):
+            print("first claim found")
             tap(DEVICE_ID, 400, 470)
             tap_march()
             return
 
-        if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "claim_btn.png"), (345, 435, 460, 370)):
+        if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "claim_btn.png"), (345, 300, 460, 370)):
+            print("second claim found")
+
             tap(DEVICE_ID, 400, 340)
             tap_march()
             return
@@ -77,6 +80,7 @@ def hunt_monster():
     take_screenshot(DEVICE_ID)
 
     if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "search_button.png"), (3, 740, 60, 800), 0.5):
+        time.sleep(3)             
         tap(DEVICE_ID, 30, 778)
     elif check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "world_btn.png"), (3, 740, 60, 800), 0.5):
         tap(DEVICE_ID, 30, 778)

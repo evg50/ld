@@ -66,7 +66,7 @@ def take_screenshot(device_id: str):
 
     return screenshot_path
 
-def tap_refresh(screen_w, screen_h, device_id):
-    tap(int(screen_w * 0.93), int(screen_h * 0.052), device_id)
+def tap_refresh(device_id, screen_w, screen_h):
+    tap( device_id, int(screen_w * 0.93), int(screen_h * 0.052),)
     sleep(0.5)
 
