@@ -65,7 +65,7 @@ def new_algorithm_flow(device_id):
     #     return False
 
     # Проверка красного кружка
-    if not check_area_xyxy(screenshot_path, TEMPLATE_RED, REGION_RED):
+    if not check_area_xyxy(screenshot_path, TEMPLATE_RED, REGION_RED,0.6):
         print("Red circle not found")
         return False
 

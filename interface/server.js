@@ -2,14 +2,14 @@
 const express = require("express");
 const { exec } = require("child_process");
 const path = require("path");
-
+const WebSocket = require('ws');
 const app = express();
 const PORT = 3000;
 
 // Пути к LDPlayer
 const LD_CONSOLE = `"H:\\LDPlayer\\LDPlayer9\\ldconsole.exe"`;
 const ADB = `"H:\\LDPlayer\\LDPlayer9\\adb.exe"`;
-
+const wss = new WebSocket.Server({ port: 3001 });
 // Папка public
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -28,6 +28,39 @@ app.get("/devices", (req, res) => {
             .map(p => p[0]);
 
         res.json(devices);
+    });
+});
+
+app.post('/checkpoint', (req, res) => {
+  const checkpoint = req.body;
+
+  // отправляем всем клиентам
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify(checkpoint));
+    }
+  });
+
+  res.sendStatus(200);
+});
+
+console.log('UI запущен: http://localhost:3000');
+console.log('WebSocket: ws://localhost:3001');
+
+app.get("/train-troops", (req, res) => {
+    const device = req.query.device;
+    if (!device) return res.send("Ошибка: device не указан");
+
+    res.send(`Запускаю тренировку войск для ${device}...`);
+
+    const cmd = `"C:\\Users\\Пользователь\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m Ldplayer_bot.services.train_troops ${device}`;
+
+    exec(cmd, { cwd: "C:\\Ldplayer_bot" }, (err, stdout, stderr) => {
+        if (err) {
+            console.log("Ошибка train_troops:", stderr);
+        } else {
+            console.log("train_troops результат:", stdout);
+        }
     });
 });
 
@@ -60,11 +93,11 @@ app.get("/run-hunt", (req, res) => {
     }
 
     // Логика выбора количества атак
-    let attacks = 11;
-    let pause = 60;
-
-    if (index === 54 || index === 56) {
-        attacks = 14;
+    let attacks = 15;
+    let pause = 40;
+    
+    if (index === 0 || index === 1) {
+        attacks = 17;
     }
 
     res.send(`Охота запускается на ${device} (атаки=${attacks}, пауза=${pause})...`);
@@ -152,25 +185,28 @@ app.get("/screenshot", (req, res) => {
     );
 });
 
+app.get("/run-fury-lord", (req, res) => {
+    const device = req.query.device;
+    if (!device) return res.send("Ошибка: device не указан");
+
+    res.send(`Запускаю Fury Lord для ${device}...`);
+
+    const cmd = `"C:\\Users\\Пользователь\\AppData\\Local\\Programs\\Python\\Python313\\python.exe" -m Ldplayer_bot.services.fury_lord ${device}`;
+
+    exec(cmd, { cwd: "C:\\Ldplayer_bot" }, (err, stdout, stderr) => {
+        if (err) {
+            console.log("Ошибка Fury Lord:", stderr);
+        } else {
+            console.log("Fury Lord результат:", stdout);
+        }
+    });
+});
+
+
 // ---------------------------------------------------------
 // Охота
 // ---------------------------------------------------------
-app.get("/hunt", (req, res) => {
-    const device = req.query.device;
-    const count = req.query.count || 5;
-    const pausa = req.query.pausa || 120;
 
-    if (!device) return res.send("Ошибка: device не указан");
-
-    exec(
-        `python -m Ldplayer_bot.services.hunt_smart ${device} ${count} ${pausa}`,
-        { cwd: path.join(__dirname, "..") },
-        (err, stdout) => {
-            if (err) return res.send("Ошибка: " + err);
-            res.send(stdout);
-        }
-    );
-});
 
 // ---------------------------------------------------------
 app.listen(PORT, () => {

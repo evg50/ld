@@ -7,7 +7,7 @@ def to_rect(x1, y1, x2, y2):
     return min(x1, x2), max(x1, x2), min(y1, y2), max(y1, y2)
 
 def find_fragments(template_path, screenshot_path="screenshots/screen.png",
-                   threshold=0.8, output_path="screenshots/matched_slots.png"):
+                   threshold=0.9, output_path="screenshots/matched_slots.png"):
     img = cv2.imread(screenshot_path)
     tmpl = cv2.imread(template_path)
     if img is None or tmpl is None:

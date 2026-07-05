@@ -1,16 +1,20 @@
 import subprocess
 import time
-import re
 import os
 import cv2
 import numpy as np
-from Ldplayer_bot.adb import take_screenshot, BASE_DIR
-import os
-from Ldplayer_bot.services.screen_analyzer import reach_game_start
+import requests
+from datetime import datetime
 
+from Ldplayer_bot.adb import take_screenshot, BASE_DIR
+from Ldplayer_bot.services.screen_analyzer import reach_game_start
 
 LDPLAYER_PATH = r"H:\LDPlayer\LDPlayer9\ldconsole.exe"
 PACKAGE = "com.readygo.barrel.gp"
+ADB_PATH = r"H:\LDPlayer\LDPlayer9\adb.exe"
+
+FRONTEND_API = "http://localhost:3000/checkpoint"
+
 DEVICE_MAP = {
     0: "emulator-5554",
     1: "emulator-5556",
@@ -23,183 +27,147 @@ DEVICE_MAP = {
     8: "emulator-5570",
 }
 
+# -----------------------------
+# FRONTEND CHECKPOINTS
+# -----------------------------
+def send_checkpoint(label, data=None):
+    payload = {
+        "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "label": label,
+        "data": data
+    }
+
+    try:
+        requests.post(FRONTEND_API, json=payload, timeout=1)
+    except Exception:
+        pass
+
+def log_checkpoint(name, data=None):
+    print(f"\n===== CHECKPOINT: {name} =====")
+    if data:
+        print(data)
+    print("================================\n")
+    send_checkpoint(name, data)
+
+# -----------------------------
+# ADB / LDPLAYER HELPERS
+# -----------------------------
 def get_device_id_by_index(index):
     return DEVICE_MAP[index]
-print(">>> BASE_DIR =", BASE_DIR)
-# -----------------------------
-# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-# -----------------------------
-def wait_for_device_online(device_id, timeout=500):
-    print(f"Ждём появления {device_id} в ADB...")
 
-    for _ in range(timeout):
-        out = subprocess.getoutput("adb devices")
-        if device_id in out and "offline" not in out:
-            print(f"{device_id} готов к работе")
-            return True
-        time.sleep(1)
-
-    raise TimeoutError(f"{device_id} не появился в ADB")
 def run_cmd(cmd):
-    return subprocess.getoutput(" ".join(cmd))
-
-def load_templates_from_folder(folder):
-    """Загружает все PNG шаблоны из папки."""
-    templates = []
-    for file in os.listdir(folder):
-        if file.lower().endswith(".png"):
-            templates.append(os.path.join(folder, file))
-    return templates
-
-def match_template(image_path, template_path, threshold=0.8):
-    """Проверяет, найден ли шаблон на изображении."""
-    print("IMAGE:", image_path)
-    print("TEMPLATE:", template_path)
-
-    img = cv2.imread(image_path, 0)
-    tpl = cv2.imread(template_path, 0)
-
-    if img is None or tpl is None:
-        return False
-
-    res = cv2.matchTemplate(img, tpl, cv2.TM_CCOEFF_NORMED)
-    loc = np.where(res >= threshold)
-
-    return len(loc[0]) > 0
-
-def get_adb_devices():
-    """Возвращает список всех ADB устройств."""
-    out = subprocess.getoutput("adb devices")
-    devices = []
-    for line in out.splitlines():
-        if "\tdevice" in line:
-            devices.append(line.split("\t")[0])
-    return devices
-
-# ---------------------------------------------------------
-# Запуск LDPlayer по индексу
-# ---------------------------------------------------------
-def launch_emulator(index):
-    print(f"Запускаем LDPlayer index={index}")
-    subprocess.Popen([r"C:\LDPlayer\LDPlayer.exe", f"--index={index}"])
-    time.sleep(3)
-# ---------------------------------------------------------
-# Проверка, запущена ли игра
-# ---------------------------------------------------------
-def is_game_running(device_id, package="com.lastz.survive.shooter"):
-    out = subprocess.getoutput(f"adb -s {device_id} shell pidof {package}")
-    return out.strip().isdigit()
-
-
-# ---------------------------------------------------------
-# Запуск игры
-# ---------------------------------------------------------
-def start_game(device_id, package="com.lastz.survive.shooter"):
-    print(f"Запускаем игру на {device_id}")
-    subprocess.run(["adb", "-s", device_id, "shell", "monkey", "-p", package, "-c", "android.intent.category.LAUNCHER", "1"])
-    time.sleep(2)
-
-# ---------------------------------------------------------
-# Ожидание, пока устройство появится в ADB
-# ---------------------------------------------------------
-def wait_for_device_online(device_id, timeout=60):
-    print(f"Ждём появления {device_id} в ADB...")
-
-    for _ in range(timeout):
-        out = subprocess.getoutput("adb devices")
-        if device_id in out and "offline" not in out:
-            print(f"{device_id} готов к работе")
-            return True
-        time.sleep(1)
-
-    raise TimeoutError(f"{device_id} не появился в ADB")
-
-def wait_for_any_template(device, folder, timeout=180, threshold=0.8):
-    """
-    Ждём появления ЛЮБОГО шаблона из папки.
-    Например: templates/start_screen/
-    """
-    print(f" Ждём появления шаблонов в папке: {folder}")
-
-    templates = load_templates_from_folder(folder)
-    if not templates:
-        print(f" В папке {folder} нет PNG шаблонов")
-        return None
-
-    start = time.time()
-
-    for _ in range(timeout):
-        screenshot_path = take_screenshot(device)  # твой метод делает screen.png
-
-        for tpl in templates:
-            if match_template(screenshot_path, tpl, threshold):
-                print(f" Найден шаблон: {tpl}")
-                print(f" Полная загрузка игры: {int(time.time() - start)} сек")
-                return tpl
-
-        time.sleep(1)
-
-    print(" Ни один шаблон не найден")
-    return None
-
-
-def launch_emulator(index):
-    print(f" Запускаем LDPlayer index={index}")
-    run_cmd([LDPLAYER_PATH, "launch", "--index", str(index)])
-
-
-
+    full = " ".join(cmd)
+    out = subprocess.getoutput(full)
+    log_checkpoint("run_cmd", f"CMD: {full}\nOUT:\n{out}")
+    return out
 
 def run_adb(device, cmd):
-    return subprocess.getoutput(f"adb -s {device} {cmd}")
+    full = f"{ADB_PATH} -s {device} {cmd}"
+    out = subprocess.getoutput(full)
+    log_checkpoint("ADB CMD", f"{full}")
+    log_checkpoint("ADB OUTPUT", out)
+    return out
 
+def launch_emulator(index):
+    run_cmd([LDPLAYER_PATH, "launch", "--index", str(index)])
+    log_checkpoint("Эмулятор запущен", f"index={index}")
+    time.sleep(3)
+
+def wait_for_device_online(device_id, timeout=60):
+    log_checkpoint("Waiting for device online", device_id)
+
+    for i in range(timeout):
+        out = subprocess.getoutput(f"{ADB_PATH} devices")
+        log_checkpoint(f"adb devices (try {i+1})", out)
+
+        if device_id in out and "offline" not in out:
+            log_checkpoint("Device is ONLINE", device_id)
+            return True
+
+        time.sleep(1)
+
+    raise TimeoutError(f"{device_id} not online")
 
 def is_game_running(device):
-    out = run_adb(device, "shell dumpsys activity activities")
-    return PACKAGE in out
-
+    out = run_adb(device, "shell pidof com.readygo.barrel.gp")
+    running = bool(out.strip())
+    log_checkpoint("Game running check", f"PID={out}, running={running}")
+    return running
 
 def start_game(device):
-    print(" Запуск игры...")
-    run_adb(device, f"shell monkey -p {PACKAGE} 1")
-
+    log_checkpoint("Starting game")
+    out = run_adb(device, f"shell monkey -p {PACKAGE} 1")
+    log_checkpoint("Monkey output", out)
+    time.sleep(3)
 
 def force_stop(device):
-    print(" Принудительное закрытие игры")
+    log_checkpoint("Force stop game")
     run_adb(device, f"shell am force-stop {PACKAGE}")
+    time.sleep(2)
 
+def restart_game(device):
+    log_checkpoint("Restarting game")
+    force_stop(device)
+    time.sleep(1)
+    run_adb(device, f"shell pkill -f {PACKAGE}")
+    time.sleep(1)
+    start_game(device)
 
-def wait_for_device_online(device_id, timeout=260):
-    for _ in range(timeout):
-        out = subprocess.getoutput("adb devices")
-        if device_id in out and "offline" not in out:
-            return True
-        time.sleep(1)
-    raise TimeoutError(f"{device_id} не появился в ADB")
-
-
-
+# -----------------------------
+# MAIN LOGIC
+# -----------------------------
 def start_emulator_and_game(index=5):
     device_id = get_device_id_by_index(index)
-    print(f"Используем device_id: {device_id}")
+    log_checkpoint("Using device", device_id)
 
     launch_emulator(index)
-
     wait_for_device_online(device_id)
 
-    if not is_game_running(device_id):
-        start_game(device_id)
+    MAX_ATTEMPTS = 5
 
-    reach_game_start(device_id)
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        log_checkpoint("Game start attempt", attempt)
 
-    return device_id
+        if not is_game_running(device_id):
+            log_checkpoint("Game is NOT running — starting")
+            start_game(device_id)
+        else:
+            log_checkpoint("Game IS running")
 
+        log_checkpoint("Calling reach_game_start()")
+        ok = reach_game_start(device_id, timeout=120)
+        log_checkpoint("Проверка экрана игры", ok)
+
+        if ok:
+            log_checkpoint("Game loaded successfully")
+            return device_id
+
+        log_checkpoint("Game did NOT load — restarting game")
+        restart_game(device_id)
+        time.sleep(3)
+
+    raise RuntimeError("Game failed to start after all attempts")
+
+# -----------------------------
+# ENTRY POINT
+# -----------------------------
 if __name__ == "__main__":
     import sys
+
     if len(sys.argv) < 2:
-        print("Ошибка: не указан index")
+        print("Error: index not provided")
         sys.exit(1)
 
     index = int(sys.argv[1])
-    device_id = start_emulator_and_game(index)
-    print(f"OK: {device_id}")
+
+    try:
+        device_id = start_emulator_and_game(index)
+        print("OK:", device_id)
+
+    except Exception as e:
+        print("Error:", e)
+        print("Restarting in 5 seconds...")
+        time.sleep(5)
+
+        python = sys.executable
+        os.execv(python, [python] + sys.argv)

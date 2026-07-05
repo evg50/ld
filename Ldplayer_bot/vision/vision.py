@@ -11,19 +11,17 @@ def find_fragments(template_path, screenshot_path="screenshots/screen.png",
     img = cv2.imread(screenshot_path)
     tmpl = cv2.imread(template_path)
     if img is None or tmpl is None:
-        print("❌ Ошибка загрузки скриншота/шаблона")
+        print("Error loading screenshot or template")
         return 0
     
     res = cv2.matchTemplate(img, tmpl, cv2.TM_CCOEFF_NORMED)
     loc = np.where(res >= threshold)
     matches = [(x, y) for (x, y) in zip(*loc[::-1])]
 
-    # print(f"🔎 Всего совпадений: {len(matches)}")
     for pt in matches:
         score = res[pt[1], pt[0]]
-        # print(f"→ Совпадение: {pt}, score={score:.3f}")
 
-    # Твои координаты слотов
+    # Slot coordinates
     slot1_range = (98, 745, 155, 800)
     slot2_range = (160, 745, 220, 800)
     slot3_range = (225, 745, 285, 800)
@@ -34,9 +32,6 @@ def find_fragments(template_path, screenshot_path="screenshots/screen.png",
     found1 = any(in_range(pt, slot1_range) for pt in matches)
     found2 = any(in_range(pt, slot2_range) for pt in matches)
     found3 = any(in_range(pt, slot3_range) for pt in matches)
-
-
-   
 
     if found3:
         return 3
@@ -61,7 +56,7 @@ def find_match(screenshot_path, template_path, area):
 
     x1, y1, x2, y2 = area
 
-    # Проверка границ
+    # Boundary check
     h, w = screenshot.shape[:2]
     if x1 < 0 or y1 < 0 or x2 > w or y2 > h:
         print("ERROR: ROI out of bounds:", area, "screenshot size:", (w, h))
@@ -69,12 +64,12 @@ def find_match(screenshot_path, template_path, area):
 
     roi = screenshot[y1:y2, x1:x2]
 
-    # Проверка пустого ROI
+    # Empty ROI check
     if roi.size == 0:
         print("ERROR: ROI is empty:", area)
         return None
 
-    # Проверка совпадения каналов
+    # Channel mismatch check
     if roi.ndim != template.ndim:
         print("ERROR: channel mismatch: roi", roi.shape, "template", template.shape)
         return None
@@ -98,30 +93,27 @@ def check_server(
     server_range=(222, 640, 248, 652),
     threshold=0.7
 ):
-    # Загружаем изображения
     img = cv2.imread(screenshot_path)
     tmpl = cv2.imread(server_template)
 
     if img is None or tmpl is None:
-        print("❌ Ошибка загрузки скриншота/шаблона сервера")
+        print("Error loading screenshot or server template")
         return False
 
-    # Вырезаем область сервера
     x1, y1, x2, y2 = server_range
     crop = img[y1:y2, x1:x2]
 
-    # Сравниваем через matchTemplate
     res = cv2.matchTemplate(crop, tmpl, cv2.TM_CCOEFF_NORMED)
     _, max_val, _, max_loc = cv2.minMaxLoc(res)
 
-    print(f"🔎 Проверка сервера: score={max_val:.3f}, loc={max_loc}")
+    print(f"Server check: score={max_val:.3f}, loc={max_loc}")
     return max_val >= threshold
 
-# def check_area_xyxy(screenshot_path, template_path, xyxy, threshold=0.77):
+
 def check_area_xyxy(screenshot_path, template_path, xyxy=(0, 0, 540, 960), threshold=0.77):
     """
     xyxy = (x1, y1, x2, y2)
-    Проверяет, совпадает ли шаблон с областью на скриншоте.
+    Checks whether the template matches the region on the screenshot.
     """
     x1, y1, x2, y2 = map(int, xyxy)
     x_min, x_max, y_min, y_max = to_rect(x1, y1, x2, y2)
@@ -130,91 +122,32 @@ def check_area_xyxy(screenshot_path, template_path, xyxy=(0, 0, 540, 960), thres
     tmpl = cv2.imread(template_path)
 
     if img is None or tmpl is None:
-        print("❌ Ошибка загрузки скриншота или шаблона")
+        print("Error loading screenshot or template")
         return False
 
     crop = img[y_min:y_max, x_min:x_max]
 
-    # Проверка размеров
     if crop.shape[0] < tmpl.shape[0] or crop.shape[1] < tmpl.shape[1]:
-        print(f"❌ Шаблон больше области: crop={crop.shape}, tmpl={tmpl.shape}")
+        print(f"Template is larger than the region: crop={crop.shape}, tmpl={tmpl.shape}")
         return False
 
     res = cv2.matchTemplate(crop, tmpl, cv2.TM_CCOEFF_NORMED)
 
     if res.size == 0:
-        print("❌ matchTemplate вернул пустой результат")
+        print("matchTemplate returned empty result")
         return False
 
     _, max_val, _, _ = cv2.minMaxLoc(res)
 
-    # print(f"🔎 score={max_val:.3f} threshold={threshold}")
     return max_val >= threshold
 
-    """
-    xyxy = (x1, y1, x2, y2) — как в твоих комментариях.
-    Сравнивает картинку в области с шаблоном.
-    """
-    x1, y1, x2, y2 = map(int, xyxy)
-    x_min, x_max, y_min, y_max = to_rect(x1, y1, x2, y2)
 
-    img = cv2.imread(screenshot_path)
-    tmpl = cv2.imread(template_path)
-    if img is None or tmpl is None:
-        print("❌ Ошибка загрузки скриншота/шаблона")
-        return False
-
-    crop = img[y_min:y_max, x_min:x_max]
-    res = cv2.matchTemplate(crop, tmpl, cv2.TM_CCOEFF_NORMED)
-    _, max_val, _, _ = cv2.minMaxLoc(res)
-    # print(f"🔎 {template_path} @ ({x_min},{y_min},{x_max},{y_max}): score={max_val:.3f}")
-    return max_val >= threshold
-
-# def check_server_multi(
-#     screenshot_path,
-#     server_templates,
-#     server_range,
-#     threshold
-    
-# ):
-#     if not os.path.exists(screenshot_path):
-#         print(f"🚫 Скриншот не найден: {screenshot_path}")
-#         return False
-
-#     img = cv2.imread(screenshot_path)
-#     if img is None:
-#         print("❌ Ошибка загрузки скриншота")
-#         return False
-
-#     x1, y1, x2, y2 = server_range
-#     crop = img[y1:y2, x1:x2]
-
-#     for tmpl_path in server_templates:
-#         if not os.path.exists(tmpl_path):
-#             print(f"🚫 Шаблон не найден: {tmpl_path}")
-#             continue
-
-#         tmpl = cv2.imread(tmpl_path)
-#         if tmpl is None:
-#             print(f"❌ Ошибка загрузки шаблона: {tmpl_path}")
-#             continue
-
-#         res = cv2.matchTemplate(crop, tmpl, cv2.TM_CCOEFF_NORMED)
-#         _, max_val, _, max_loc = cv2.minMaxLoc(res)
-        
-#         # print(f"🔎 Проверка {tmpl_path}: score={max_val:.3f}")
-#         if max_val >= threshold:
-#             # print(f"✅ Совпадение найдено ({tmpl_path})")
-#             return True
-
-#     # print("🚫 Совпадений нет")
-#     return False
 import cv2
 import os
 import numpy as np
 
 def debug_match(crop, tmpl, res, out_name):
-    """Сохраняет картинку с подсветкой совпадения."""
+    """Saves an image with highlighted match."""
     if not os.path.exists("debug"):
         os.makedirs("debug")
 
@@ -225,10 +158,8 @@ def debug_match(crop, tmpl, res, out_name):
     top_left = max_loc
     bottom_right = (top_left[0] + w, top_left[1] + h)
 
-    # Рисуем рамку
     cv2.rectangle(crop_vis, top_left, bottom_right, (0, 255, 0), 2)
 
-    # Пишем score
     cv2.putText(
         crop_vis,
         f"{max_val:.3f}",
@@ -250,7 +181,7 @@ def check_server_multi(
 ):
     img = cv2.imread(screenshot_path)
     if img is None:
-        print("❌ Ошибка загрузки скриншота")
+        print("Error loading screenshot")
         return False
 
     x1, y1, x2, y2 = server_range
@@ -260,22 +191,18 @@ def check_server_multi(
     for tmpl_path in server_templates:
         tmpl = cv2.imread(tmpl_path)
         if tmpl is None:
-            print(f"❌ Ошибка загрузки шаблона: {tmpl_path}")
+            print(f"Error loading template: {tmpl_path}")
             continue
 
         tmpl_gray = cv2.cvtColor(tmpl, cv2.COLOR_BGR2GRAY)
 
-        # Пропускаем, если шаблон больше области
         if crop_gray.shape[0] < tmpl_gray.shape[0] or crop_gray.shape[1] < tmpl_gray.shape[1]:
-            print(f"⚠️ Шаблон {tmpl_path} больше области — пропуск")
+            print(f"Template {tmpl_path} is larger than the region — skipping")
             continue
 
         res = cv2.matchTemplate(crop_gray, tmpl_gray, cv2.TM_CCOEFF_NORMED)
         _, max_val, _, _ = cv2.minMaxLoc(res)
 
-        # print(f"🔎 {tmpl_path}: score={max_val:.3f}")
-
-        # Сохраняем debug-картинку
         name = os.path.basename(tmpl_path).replace(".png", "")
         debug_match(crop, tmpl, res, f"match_{name}")
 

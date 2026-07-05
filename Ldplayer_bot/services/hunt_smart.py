@@ -45,8 +45,14 @@ def tap_march():
     # hospital_full
     if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "hospital_full.png"), (50, 300, 490, 600)):
         tap(DEVICE_ID, 183, 461)
+        time.sleep(1)
+
         tap(DEVICE_ID, 185, 545)
+        time.sleep(1)
+
         tap(DEVICE_ID, 280, 670)
+        time.sleep(1)
+
         return
 
     # fuel_reload
@@ -55,6 +61,8 @@ def tap_march():
         tap(DEVICE_ID, 280, 670)
         time.sleep(2)
         take_screenshot(DEVICE_ID)
+        time.sleep(1)
+
 
         # claim
         if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "claim_btn.png"), (340, 420, 470, 500)):
@@ -78,10 +86,13 @@ def tap_march():
 def hunt_monster():
     print("Searching for search button...")
     take_screenshot(DEVICE_ID)
+    time.sleep(1)
 
     if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "search_button.png"), (3, 740, 60, 800), 0.5):
         time.sleep(3)             
         tap(DEVICE_ID, 30, 778)
+        time.sleep(1)
+
     elif check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "world_btn.png"), (3, 740, 60, 800), 0.5):
         tap(DEVICE_ID, 30, 778)
         print("Search button not found")
@@ -92,7 +103,11 @@ def hunt_monster():
 
     if check_area_xyxy(SCREENSHOT_PATH, os.path.join(BASE_DIR, "templates", "frostbane.png"), (150, 550, 300, 700)):
         tap(DEVICE_ID, 206, 640)
+        time.sleep(1)
+
         tap(DEVICE_ID, 260, 915)
+        time.sleep(1)
+
     else:
         print("Frostbane not found")
         return

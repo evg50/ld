@@ -22,7 +22,7 @@ DEVICE_NAMES = {
     "emulator-5564": "glory--farm",
     "emulator-5558": "ukrop",
     "emulator-5556": "farm glory",
-    "emulator-5554": "Glory",
+    "emulator-5554": "Glory f2p",
     "emulator-5560": "glory farm"
 }
 
@@ -75,7 +75,7 @@ def share_truck(chat_type):
     sleep(0.2)
 
     chat_positions = {
-        1: (222, 620),
+        1: (222, 720),
         2: (222, 540),
         3: (222, 460),
         4: (222, 380)
@@ -106,10 +106,10 @@ def probe_area():
 # 5. Truck screen detection
 # -------------------------------
 def check_truck_screen():
-    template = os.path.join(BASE_DIR, "templates", "text_loot_truck.png")
-    area = (25, 20, 350, 65)
+    template = os.path.join(BASE_DIR, "templates/buttons", "others' Trucks_btn.png")
+    area = (90, 890, 300, 950)
 
-    if check_area_xyxy(SCREENSHOT_PATH, template, area):
+    if check_area_xyxy(SCREENSHOT_PATH, template, area, 0.6):
         return True
 
     print("Truck screen not detected")
@@ -154,8 +154,8 @@ def process_truck():
     now = time.strftime("%Y-%m-%d %H:%M:%S")
 
     server_templates = [
-        os.path.join(BASE_DIR, "templates", "servers", "24_1.png"),
-        os.path.join(BASE_DIR, "templates", "servers", "24_2.png")
+        os.path.join(BASE_DIR, "templates", "servers", "31_1.png"),
+        os.path.join(BASE_DIR, "templates", "servers", "31_2.png")
     ]
 
     server_range = (185, 637, 210, 655)
