@@ -1,14 +1,13 @@
 const TOTAL_INDEXES = 8;
 
-
 // Генерация таблицы один раз
 async function buildTable() {
-    const body = document.getElementById("devices-body");
+  const body = document.getElementById('devices-body');
 
-    for (let index = 0; index < TOTAL_INDEXES; index++) {
-        const device = "emulator-" + (5554 + index * 2);
+  for (let index = 0; index < TOTAL_INDEXES; index++) {
+    const device = 'emulator-' + (5554 + index * 2);
 
-        body.innerHTML += `
+    body.innerHTML += `
             <tr data-device="${device}">
                 <td class="index">${index}</td>
                 <td class="device-id">${device}</td>
@@ -19,6 +18,7 @@ async function buildTable() {
                         <option value="vip">VIP</option>
                         <option value="fury">Fury Lord</option>
                         <option value="train">Train Troops</option>
+                        <option value="trucks">Поиск грузовиков</option>
                     </select>
                 </td>
 
@@ -39,12 +39,11 @@ async function buildTable() {
                 </td>
             </tr>
         `;
-    }
+  }
 
-    bindButtons();
-    updateStatuses();
+  bindButtons();
+  updateStatuses();
 }
-
 
 // ws.onmessage = (event) => {
 //   const cp = JSON.parse(event.data);
@@ -53,61 +52,73 @@ async function buildTable() {
 // };
 // Привязка кнопок
 function bindButtons() {
-    const rows = document.querySelectorAll("table.devices-table tbody tr");
+  const rows = document.querySelectorAll(
+    'table.devices-table tbody tr',
+  );
 
-    rows.forEach(row => {
-        const device = row.dataset.device;
-        const index = row.querySelector(".index").innerText.trim();
+  rows.forEach((row) => {
+    const device = row.dataset.device;
+    const index = row
+      .querySelector('.index')
+      .innerText.trim();
 
-        const select = row.querySelector(".action-select");
-        const startBtn = row.querySelector(".action-start-btn");
+    const select = row.querySelector('.action-select');
+    const startBtn = row.querySelector('.action-start-btn');
 
-        startBtn.onclick = () => {
-            const action = select.value;
+    startBtn.onclick = () => {
+      const action = select.value;
 
-            if (action === "hunt") runHunt(device, index);
-            if (action === "vip") runVIP(device);
-            if (action === "fury") runFuryLord(device);
-            if (action === "train") runTrainTroops(device);
-        };
+      if (action === 'hunt') runHunt(device, index);
+      if (action === 'vip') runVIP(device);
+      if (action === 'fury') runFuryLord(device);
+      if (action === 'train') runTrainTroops(device);
+      if (action === 'trucks') runSearchTruck(device);
+    };
 
-        row.querySelector(".start-btn").onclick = () => startLD(index);
-        row.querySelector(".stop-btn").onclick = () => stopLD(index, device);
-        row.querySelector(".shot-btn").onclick = () => loadScreenshot(device);
-    });
+    row.querySelector('.start-btn').onclick = () =>
+      startLD(index);
+    row.querySelector('.stop-btn').onclick = () =>
+      stopLD(index, device);
+    row.querySelector('.shot-btn').onclick = () =>
+      loadScreenshot(device);
+  });
 }
 
 // LD
 function startLD(index) {
-    fetch("/start-ld?index=" + index);
+  fetch('/start-ld?index=' + index);
 }
 
 function stopLD(index, device) {
-    fetch("/stop-ld?index=" + index);
+  fetch('/stop-ld?index=' + index);
 }
 
 // Скрин
 function loadScreenshot(device) {
-    const img = document.getElementById("img-" + device);
-    img.src = "/screenshot?device=" + device + "&ts=" + Date.now();
+  const img = document.getElementById('img-' + device);
+  img.src =
+    '/screenshot?device=' + device + '&ts=' + Date.now();
 }
 
 // Охота
 function runHunt(device, index) {
-    fetch(`/run-hunt?device=${device}&index=${index}`);
+  fetch(`/run-hunt?device=${device}&index=${index}`);
 }
 
 function runVIP(device) {
-    fetch(`/run-vip?device=${device}`);
+  fetch(`/run-vip?device=${device}`);
+}
+function runSearchTruck(device) {
+  fetch(`/run-search-truck?device=${device}`);
 }
 
 function runFuryLord(device) {
-    fetch(`/run-fury-lord?device=${device}`);
+  fetch(`/run-fury-lord?device=${device}`);
 }
 
 // NEW: Train Troops
 function runTrainTroops(device) {
-    fetch(`/train-troops?device=${device}`);
+  fetch(`/train-troops?device=${device}`);
 }
 
 function addCheckpointToUI(cp) {
@@ -125,40 +136,47 @@ function addCheckpointToUI(cp) {
 
 // Обновление статусов
 async function updateStatuses() {
-    const devices = await fetch("/devices").then(r => r.json());
+  const devices = await fetch('/devices').then((r) =>
+    r.json(),
+  );
 
-    document.querySelectorAll("tr[data-device]").forEach(row => {
-        const device = row.dataset.device;
-        const isRunning = devices.includes(device);
+  document
+    .querySelectorAll('tr[data-device]')
+    .forEach((row) => {
+      const device = row.dataset.device;
+      const isRunning = devices.includes(device);
 
-        const statusCell = document.getElementById("status-" + device);
-        const stopBtn = row.querySelector(".stop-btn");
-        const shotBtn = row.querySelector(".shot-btn");
-        const select = row.querySelector(".action-select");
-        const actionStart = row.querySelector(".action-start-btn");
+      const statusCell = document.getElementById(
+        'status-' + device,
+      );
+      const stopBtn = row.querySelector('.stop-btn');
+      const shotBtn = row.querySelector('.shot-btn');
+      const select = row.querySelector('.action-select');
+      const actionStart = row.querySelector(
+        '.action-start-btn',
+      );
 
-        if (isRunning) {
-            row.classList.add("running");
-            row.classList.remove("offline");
+      if (isRunning) {
+        row.classList.add('running');
+        row.classList.remove('offline');
 
-            statusCell.innerText = "Запущен";
+        statusCell.innerText = 'Запущен';
 
-            stopBtn.disabled = false;
-            shotBtn.disabled = false;
-            select.disabled = false;
-            actionStart.disabled = false;
+        stopBtn.disabled = false;
+        shotBtn.disabled = false;
+        select.disabled = false;
+        actionStart.disabled = false;
+      } else {
+        row.classList.add('offline');
+        row.classList.remove('running');
 
-        } else {
-            row.classList.add("offline");
-            row.classList.remove("running");
+        statusCell.innerText = 'Оффлайн';
 
-            statusCell.innerText = "Оффлайн";
-
-            stopBtn.disabled = true;
-            shotBtn.disabled = true;
-            select.disabled = true;
-            actionStart.disabled = true;
-        }
+        stopBtn.disabled = true;
+        shotBtn.disabled = true;
+        select.disabled = true;
+        actionStart.disabled = true;
+      }
     });
 }
 
